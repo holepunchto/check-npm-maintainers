@@ -80,10 +80,7 @@ function printResult(title, items) {
 
 function checkMissingKeyOwner(keyOwners, trustedOwners, names) {
   if (names.some((name) => keyOwners.includes(name))) return false
-  for (const name of names) {
-    if (trustedOwners.includes(name)) return true
-  }
-  return false
+  return names.some((name) => trustedOwners.includes(name))
 }
 
 function checkExpiredOwners(keyOwners, trustedOwners, names) {
