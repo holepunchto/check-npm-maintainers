@@ -1,0 +1,35 @@
+{
+  "name": "check-npm-maintainers",
+  "version": "0.0.0",
+  "description": "Check transitive maintainers",
+  "main": "index.js",
+  "bin": {
+    "check-npm-maintainers": "index.js"
+  },
+  "files": [
+    "index.js",
+    "owners.txt"
+  ],
+  "scripts": {
+    "format": "prettier --write . && lunte --fix",
+    "lint": "prettier --check . && lunte",
+    "test": "npm run lint"
+  },
+  "dependencies": {
+    "paparam": "^1.10.0"
+  },
+  "devDependencies": {
+    "lunte": "^1.6.0",
+    "prettier-config-holepunch": "^2.0.0"
+  },
+  "author": "Holepunch",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/holepunchto/check-npm-maintainers.git"
+  },
+  "bugs": {
+    "url": "https://github.com/holepunchto/check-npm-maintainers/issues"
+  },
+  "homepage": "https://github.com/holepunchto/check-npm-maintainers#readme"
+}
