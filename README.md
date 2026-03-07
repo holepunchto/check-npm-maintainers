@@ -32,7 +32,7 @@ check-npm-maintainers owners.txt
 ## Options
 
 ```
---mode <mode>           Packages to check, all or prod only (default: all)
+--prod                  Only check production dependencies
 --key-owner <username>  Key owners to verify (default: mafintosh, can be repeated)
 ```
 
@@ -41,7 +41,7 @@ check-npm-maintainers owners.txt
 Check only production dependencies:
 
 ```sh
-check-npm-maintainers --mode prod owners.txt
+check-npm-maintainers --prod owners.txt
 ```
 
 Check with multiple key owners:

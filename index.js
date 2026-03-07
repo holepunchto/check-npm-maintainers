@@ -5,26 +5,25 @@ const { spawnSync, execFile } = require('child_process')
 const { promisify } = require('util')
 const execFileAsync = promisify(execFile)
 
-const DEFAULT_MODE = 'all'
 const DEFAULT_KEY_OWNERS = 'mafintosh' // comma separated
 const DEFAULT_OWNERS_FILE = 'owners.txt' // line separated
 
 const cmd = command(
   'check-npm-maintainers',
-  flag('--mode <mode>', `Packages to check, all or prod only (default: ${DEFAULT_MODE})`),
+  flag('--prod', 'Only check production dependencies'),
   flag('--key-owner <username>', `Key owners (default: ${DEFAULT_KEY_OWNERS})`).multiple(),
   arg('[owners]', `Trusted owners (default: ${DEFAULT_OWNERS_FILE})`),
   run
 )
 
 async function run({ flags, args }) {
-  const mode = flags.mode || DEFAULT_MODE
+  const prod = flags.prod || false
   const keyOwners = flags.keyOwner?.length ? flags.keyOwner : DEFAULT_KEY_OWNERS.split(',')
   const ownersFile = args.owners || DEFAULT_OWNERS_FILE
 
   const trustedOwners = (await fs.readFile(ownersFile, 'utf-8')).split('\n').filter(Boolean)
 
-  const allMaintainers = await extractMaintainers(mode)
+  const allMaintainers = await extractMaintainers(prod)
   await checkMaintainers(allMaintainers, keyOwners, trustedOwners)
 }
 
@@ -89,8 +88,8 @@ function checkExpiredOwners(keyOwners, trustedOwners, names) {
   return names.filter((name) => !keyOwners.includes(name) && !trustedOwners.includes(name))
 }
 
-async function extractMaintainers(mode) {
-  const npmTree = getNpmTree(mode)
+async function extractMaintainers(prod) {
+  const npmTree = getNpmTree(prod)
   const allPackages = Array.from(collectAllDeps(npmTree)).sort()
   console.log(`Found ${allPackages.length} packages...`)
 
@@ -114,9 +113,9 @@ async function extractMaintainers(mode) {
   return allMaintainers
 }
 
-function getNpmTree(mode) {
+function getNpmTree(prod) {
   const args = ['ls', '--all', '--json']
-  if (mode === 'prod') args.push('--omit=dev')
+  if (prod) args.push('--omit=dev')
   const lsResult = spawnSync('npm', args, { encoding: 'utf-8' })
   if (lsResult.error || lsResult.status !== 0) {
     console.error('npm ls failed:', lsResult.stderr || lsResult.error)
