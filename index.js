@@ -6,7 +6,6 @@ const { promisify } = require('util')
 const execFileAsync = promisify(execFile)
 
 const DEFAULT_MODE = 'all'
-const MAINTAINERS_FILE = 'maintainers.json'
 const DEFAULT_KEY_OWNERS = 'mafintosh' // comma separated
 const DEFAULT_OWNERS_FILE = 'owners.txt' // line separated
 
@@ -114,8 +113,6 @@ async function extractMaintainers(mode) {
   }
 
   await Promise.all(Array.from({ length: concurrency }, worker))
-
-  await fs.writeFile(MAINTAINERS_FILE, JSON.stringify(allMaintainers, null, 2), 'utf-8')
 
   return allMaintainers
 }
