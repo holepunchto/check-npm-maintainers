@@ -5,20 +5,19 @@ const { spawnSync, execFile } = require('child_process')
 const { promisify } = require('util')
 const execFileAsync = promisify(execFile)
 
-const DEFAULT_KEY_OWNERS = 'mafintosh' // comma separated
 const DEFAULT_OWNERS_FILE = 'owners.txt' // line separated
 
 const cmd = command(
   'check-npm-maintainers',
   flag('--prod', 'Only check production dependencies'),
-  flag('--key-owner <username>', `Key owners (default: ${DEFAULT_KEY_OWNERS})`).multiple(),
+  flag('--key-owner <username>', `Key owners`).multiple(),
   arg('[owners]', `Trusted owners (default: ${DEFAULT_OWNERS_FILE})`),
   run
 )
 
 async function run({ flags, args }) {
   const prod = flags.prod || false
-  const keyOwners = flags.keyOwner?.length ? flags.keyOwner : DEFAULT_KEY_OWNERS.split(',')
+  const keyOwners = flags.keyOwner || []
   const ownersFile = args.owners || DEFAULT_OWNERS_FILE
 
   const trustedOwners = (await fs.readFile(ownersFile, 'utf-8')).split('\n').filter(Boolean)
@@ -36,8 +35,11 @@ async function checkMaintainers(allMaintainers, keyOwners, trustedOwners) {
     if (!owners.length || owners[0] === 'Unknown') return
 
     const names = owners.map((item) => item.split(' ')[0]) // to handle "name <email>" format
-    const missingKeyOwner = checkMissingKeyOwner(keyOwners, trustedOwners, names)
-    if (missingKeyOwner) missingKeyOwnerPkgs.push({ pkg, owners, names })
+
+    if (keyOwners.length) {
+      const missingKeyOwner = checkMissingKeyOwner(keyOwners, trustedOwners, names)
+      if (missingKeyOwner) missingKeyOwnerPkgs.push({ pkg, owners, names })
+    }
 
     const expiredOwners = checkExpiredOwners(keyOwners, trustedOwners, names)
     if (expiredOwners.length) expiredOwnerPkgs.push({ pkg, owners, names, expiredOwners })
@@ -48,10 +50,12 @@ async function checkMaintainers(allMaintainers, keyOwners, trustedOwners) {
     if (isExternal) externalOwnerPkgs.push({ pkg, owners, names })
   })
 
-  printResult(
-    `Found ${missingKeyOwnerPkgs.length} packages missing key owner (${keyOwners.join(', ')})`,
-    missingKeyOwnerPkgs.map((item) => `${item.pkg} [${item.names.join(', ')}]`)
-  )
+  if (keyOwners.length) {
+    printResult(
+      `Found ${missingKeyOwnerPkgs.length} packages missing key owner (${keyOwners.join(', ')})`,
+      missingKeyOwnerPkgs.map((item) => `${item.pkg} [${item.names.join(', ')}]`)
+    )
+  }
 
   printResult(
     `Found ${expiredOwnerPkgs.length} packages with expired owners`,
@@ -59,10 +63,11 @@ async function checkMaintainers(allMaintainers, keyOwners, trustedOwners) {
       (item) => `${item.pkg} [${item.names.join(', ')}] (expired ${item.expiredOwners.join(', ')})`
     )
   )
-
-  printResult('Expired owners across all packages', [
-    ...new Set(expiredOwnerPkgs.flatMap((item) => item.expiredOwners))
-  ])
+  if (expiredOwnerPkgs.length) {
+    printResult('Expired owners across all packages', [
+      ...new Set(expiredOwnerPkgs.flatMap((item) => item.expiredOwners))
+    ])
+  }
 
   printResult(
     `Found ${externalOwnerPkgs.length} packages owned entirely by external maintainers`,
